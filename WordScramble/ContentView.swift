@@ -15,6 +15,7 @@ struct ContentView: View {
     @State private var errorTitle = ""
     @State private var errorMessage = ""
     @State private var showingError = false
+    @State private var playerScore = 0
     var body: some View {
         NavigationView {
             List {
@@ -31,8 +32,16 @@ struct ContentView: View {
                         }
                     }
                 }
+                Section ("Player Score") {
+                    Text("\(playerScore)")
+                }
             }
             .navigationTitle(rootWord)
+            .toolbar {
+                Button("Resart") {
+                    startGame()
+                }
+            }
         }
         .onSubmit(addNewWord)
         .onAppear(perform: startGame)
@@ -41,6 +50,7 @@ struct ContentView: View {
         } message: {
             Text(errorMessage)
         }
+
 
     }
 
@@ -51,7 +61,18 @@ struct ContentView: View {
         // exit if the remaining string is empty
         guard answer.count > 0 else { return }
 
-        //extra validation to come
+        //extra validation to come (It's here now)
+
+        guard tooShort(word: answer) else {
+            wordError(title: "Too Short", message: "Words need to be more than 3 letters")
+            return
+        }
+
+        guard isSameAsStartWord(word: answer) else {
+            wordError(title: "Same as Original", message: "You can't use the orginal word")
+            return
+        }
+
         guard isOriginal(word: answer) else {
             wordError(title: "Word used already", message: "Be more original")
             return
@@ -70,6 +91,7 @@ struct ContentView: View {
         withAnimation{
             usedWords.insert(answer, at: 0)
         }
+        playerScore += 10 + answer.count
         newWord = ""
 
     }
@@ -85,6 +107,9 @@ struct ContentView: View {
                 // 4. Pick one random word, or use "silkworm" as a sensible default
                 rootWord = allWords.randomElement() ?? "silkworm"
 
+                //Reset the player score
+                playerScore = 0
+                usedWords.removeAll()
                 // If we are here everything has worked, so we can exit
                 return
             }
@@ -120,11 +145,27 @@ struct ContentView: View {
         return misspelledRange.location == NSNotFound
     }
 
+    func tooShort(word: String) -> Bool {
+        if word.count > 3 {
+            return true
+        }
+        return false
+    }
+
+    func isSameAsStartWord(word: String) -> Bool {
+        if word != rootWord {
+            return true
+        }
+        return false
+    }
+
     func wordError(title: String, message: String) {
         errorTitle = title
         errorMessage = errorMessage
         showingError = true
     }
+
+
 }
 
 #Preview {
